@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 ap = ArgumentParser()
 ap.add_arg('-f', '--filename', type=str, required=True, help="The file with a bash script of wget entries for Simulated Kepler Lightcurves.")
 ap.add_arg('-o', '--outputdir', type=str, required=False, default='./', help="The directory which to push the data final gunzip files.")
-ap.add_arg('-c', '--chunk', type=bool, nargs=?, required=False, default=False, help="The directory which to push the data final gunzip files.")
+ap.add_arg('-c', '--chunk', type=bool, nargs='?', required=False, default=False, help="The directory which to push the data final gunzip files.")
 ap.add_arg('-nc', '--numchunks', type=int, required=False, default=100, help="Number of chunks  into which to segment stack of files.")
 
 args = vars(ap.parse_args())
