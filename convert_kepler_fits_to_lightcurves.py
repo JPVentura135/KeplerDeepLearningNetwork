@@ -1,4 +1,5 @@
 from astropy.io import fits
+from os import path, mkdir
 from sklearn.externals import joblib
 from subprocess import call
 from tqdm import tqdm
@@ -30,16 +31,24 @@ if do_chunk:
     n_files_per_chunk = n_lines // n_chunks
     
     i_chunk = 0
+    
+    if outputdir[-1] == '/': outputdir = outputdir[:-1]
+    
     outputdir0 = outputdir
     
     print('[INFO] Chunking flagged with {} segments and {} lines per segment.'.format(n_chunks, n_files_per_chunk))
+
+if not path.exists(outputdir): mkdir(outputdir)
 
 with open(filename,'r') as filein:
     print('[INFO] Begin Proecessing of File {}.'.format(filename))
     for kl, line in tqdm(enumerate(filein.readlines()), total=n_lines):
         if line[0] != '#' and line[:4] =='wget':
             if do_chunk and (kl % n_files_per_chunk == 0): 
-                outputdir = outputdir0 + '_{0:04}'.format(i_chunk)
+                outputdir = outputdir0 + '_{0:04}/'.format(i_chunk)
+                
+                if not path.exists(outputdir): mkdir(outputdir)
+                
                 i_chunk = i_chunk + 1
             
             line_splits = line.replace('wget','wget -c --no-check-certificate').split(' ')
@@ -54,4 +63,5 @@ with open(filename,'r') as filein:
             joblib.dump(flux_now, save_filename)
             
             call(['gzip','-S', '.gz', save_filename])
+            call(['mv', save_filename + '.gz', outputdir])
             call(['rm', '-rf', fits_filename])
