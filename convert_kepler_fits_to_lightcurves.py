@@ -29,13 +29,13 @@ if do_chunk:
     n_files_per_chunk = n_lines // n_chunks
     
     i_chunk = 0
-    output_dir0 = output_dir
+    outputdir0 = outputdir
 
 with open(filename,'r') as filein:
     for kl, line in tqdm(enumerate(filein.readlines())):
         if line[0] != '#' and line[:4] =='wget':
             if do_chunk and (kl % n_dir_push == 0): 
-                output_dir = output_dir0 + '_{0:04}'.format(i_chunk)
+                outputdir = outputdir0 + '_{0:04}'.format(i_chunk)
                 i_chunk = i_chunk + 1
             
             line_splits = line.replace('wget','wget -c --no-check-certificate').split(' ')
