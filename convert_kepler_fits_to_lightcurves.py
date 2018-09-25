@@ -1,9 +1,10 @@
+from argparse import ArgumentParser
 from astropy.io import fits
+from multiprocess import Pool, cpu_count
 from os import path, mkdir
 from sklearn.externals import joblib
 from subprocess import call
 from tqdm import tqdm
-from argparse import ArgumentParser
 
 ap = ArgumentParser()
 ap.add_argument('-f', '--filename', type=str, required=True, help="The file with a bash script of wget entries for Simulated Kepler Lightcurves.")
@@ -40,28 +41,38 @@ if do_chunk:
 
 if not path.exists(outputdir): mkdir(outputdir)
 
+def grab_and_process_one_file(line, outputdir, do_chunk=False, i_chunk=0, n_files_per_chunk=100):
+    if line[0] != '#' and line[:4] =='wget':
+        
+        line_splits = line.replace('wget','wget -c --no-check-certificate').split(' ')
+        fits_filename = line_splits[4]
+        
+        call(line_splits)
+        
+        # Load and extract ONLY the part(s) that we want for feature injection into the network
+        flux_now = fits.open(fits_filename)['INJECTED LIGHTCURVE'].data['PDCSAP_FLUX']
+        
+        save_filename = fits_filename.replace('.fits.gz', '.joblib.save')
+        joblib.dump(flux_now, save_filename)
+        
+        call(['gzip','-S', '.gz', save_filename])
+        call(['mv', save_filename + '.gz', outputdir])
+        call(['rm', '-rf', fits_filename])
+
 with open(filename,'r') as filein:
     print('[INFO] Begin Proecessing of File {}.'.format(filename))
-    for kl, line in tqdm(enumerate(filein.readlines()), total=n_lines):
-        if line[0] != '#' and line[:4] =='wget':
-            if do_chunk and (kl % n_files_per_chunk == 0): 
-                outputdir = outputdir0 + '_{0:04}/'.format(i_chunk)
-                
-                if not path.exists(outputdir): mkdir(outputdir)
-                
-                i_chunk = i_chunk + 1
-            
-            line_splits = line.replace('wget','wget -c --no-check-certificate').split(' ')
-            call(line_splits)
-            
-            fits_filename = line_splits[4]
-            
-            # Load and extract ONLY the part(s) that we want for feature injection into the network
-            flux_now = fits.open(fits_filename)['INJECTED LIGHTCURVE'].data['PDCSAP_FLUX']
-            
-            save_filename = fits_filename.replace('.fits.gz', '.joblib.save')
-            joblib.dump(flux_now, save_filename)
-            
-            call(['gzip','-S', '.gz', save_filename])
-            call(['mv', save_filename + '.gz', outputdir])
-            call(['rm', '-rf', fits_filename])
+    # for kl, line in tqdm(enumerate(filein.readlines()), total=n_lines):
+    if do_chunk and (kl % n_files_per_chunk == 0): 
+        outputdirs = []
+        
+        for k in range(n_chunks): outputdirs.extend([outputdir0 + '_{0:04}/'.format(k)]*n_files_per_chunk)
+        
+        for outputdir in outputdirs: if not path.exists(outputdir): mkdir(outputdir)
+    
+    else:
+        outputdirs = [outputdir]*n_lines
+    
+    pool = Pool(cpu_count())
+    pool.starmap(grab_and_process_one_file, zip(filein.readlines(), outputdirs))
+    pool.close()
+    pool.join()
