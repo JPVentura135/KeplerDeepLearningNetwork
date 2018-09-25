@@ -22,17 +22,21 @@ n_chunks = args['numchunks']
 str1000 = str(1000)
 len1000 = len(str1000)
 
+with open(filename,'r') as filein: n_lines = len(filein.readlines())
+
+print('[INFO] Loaded file {} with {} lines.'.format(filename, n_lines))
+
 if do_chunk:
-    with open(filename,'r') as filein:
-        n_lines = len(filein.readlines())
-    
     n_files_per_chunk = n_lines // n_chunks
     
     i_chunk = 0
     outputdir0 = outputdir
+    
+    print('[INFO] Chunking flagged with {} segments and {} lines per segment.'.format(n_chunks, n_files_per_chunk))
 
 with open(filename,'r') as filein:
-    for kl, line in tqdm(enumerate(filein.readlines())):
+    print('[INFO] Begin Proecessing of File {}.'.format(filename))
+    for kl, line in tqdm(enumerate(filein.readlines()), total=n_lines):
         if line[0] != '#' and line[:4] =='wget':
             if do_chunk and (kl % n_files_per_chunk == 0): 
                 outputdir = outputdir0 + '_{0:04}'.format(i_chunk)
