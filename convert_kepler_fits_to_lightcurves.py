@@ -6,11 +6,14 @@ from argparse import ArgumentParser
 
 ap = ArgumentParser()
 ap.add_arg('-f', '--filename', type=str, required=True, help="The file with a bash script of wget entries for Simulated Kepler Lightcurves.")
+ap.add_arg('-o', '--outputdir', type=str, required=True, help="The directory which to push the data final gunzip files.")
 
 args = vars(ap.parse_args())
 
 # n_calls = 140975
 filename = args['filename'] # 'injected-light-curves-dr25-inj3.bat'
+outputdir = args['outputdir']
+
 # filename = 'injected-light-curves-dr25-inj3.last10.bat'
 str1000 = str(1000)
 len1000 = len(str1000)
