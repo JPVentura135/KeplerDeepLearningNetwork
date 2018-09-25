@@ -34,7 +34,7 @@ if do_chunk:
 with open(filename,'r') as filein:
     for kl, line in tqdm(enumerate(filein.readlines())):
         if line[0] != '#' and line[:4] =='wget':
-            if do_chunk and (kl % n_dir_push == 0): 
+            if do_chunk and (kl % n_files_per_chunk == 0): 
                 outputdir = outputdir0 + '_{0:04}'.format(i_chunk)
                 i_chunk = i_chunk + 1
             
